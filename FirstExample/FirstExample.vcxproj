@@ -85,7 +85,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="JD-101175013-Assignment4.cpp" />
+    <ClCompile Include="JD-101175013-Assignment5.cpp" />
     <ClCompile Include="LoadShaders.cpp" />
   </ItemGroup>
   <ItemGroup>

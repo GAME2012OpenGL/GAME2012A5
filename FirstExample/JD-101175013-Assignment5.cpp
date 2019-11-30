@@ -1,11 +1,11 @@
 ﻿//***************************************************************************
-// JD-101175013-Assignment4.cpp by Jang Doosung (C) 2018 All Rights Reserved.
+// JD-101175013-Assignment5.cpp by Jang Doosung (C) 2018 All Rights Reserved.
 //
-// Assignment 4 submission.
+// Assignment 5 submission.
 //
 // Description:
-//	Texture and Lighting
-//  Press Q to enable wireframe mode
+//	Texture, Blending and Lighting
+//  
 //*****************************************************************************
 
 using namespace std;
@@ -31,10 +31,11 @@ GLuint uniformProj = 0;
 GLuint uniformLightPos = 0;
 
 GLuint vao, ibo, points_vbo, colours_vbo;
-GLuint iNumOfPlaneIndices = 0;
+GLuint iNumOfCubeIndices = 0;
 GLuint iNumOfVertices = 0;
 GLuint iVertexLength = 0;
-GLuint plane_tex = 0;
+GLuint iLeather_tex = 0;
+GLuint iFence_tex = 0;
 
 float rotAngle = 0.0f;
 
@@ -50,8 +51,73 @@ int WindowHeight = 600;
 glm::vec3 CameraPosition = glm::vec3(0.f, 0.f, 10);
 float fCameraSpeed = 0.5f;
 
-GLfloat* plane_vertices;
-GLshort* plane_indices;
+GLfloat cube_vertices[] =
+{
+	//Front 
+	//x, y, z				u, v		nx, ny, nz
+	-1.0f, -1.0f, 1.0f,		0, 1,		0, 0, 0,	// 0.
+	1.0f, -1.0f, 1.0f,		1, 1,		0, 0, 0,	// 1
+	1.0f, 1.0f, 1.0f,		1, 0,		0, 0, 0,	// 2.
+	-1.0f, 1.0f, 1.0f,		0, 0,		0, 0, 0,	// 3.
+
+	//Right
+	1.0f, -1.0f, 1.0f,		0, 1,		0, 0, 0,	// 4
+	1.0f, -1.0f, -1.0f,		1, 1,		0, 0, 0,	// 5
+	1.0f, 1.0f, -1.0f,		1, 0,		0, 0, 0,	// 6
+	1.0f, 1.0f, 1.0f,		0, 0,		0, 0, 0,	// 7.
+
+	//Left
+	-1.0f, -1.0f, -1.0f,	0, 1,		0, 0, 0,	// 8
+	-1.0f, -1.0f, 1.0f,		1, 1,		0, 0, 0,	// 9
+	-1.0f, 1.0f, 1.0f,		1, 0,		0, 0, 0,	// 10
+	-1.0f, 1.0f, -1.0f,		0, 0,		0, 0, 0,	// 11
+
+	//Back
+	1.0f, -1.0f, -1.0f,		0, 1,		0, 0, 0,	// 12
+	-1.0f, -1.0f, -1.0f,	1, 1,		0, 0, 0,	// 13
+	-1.0f, 1.0f, -1.0f,		1, 0,		0, 0, 0,	// 14
+	1.0f, 1.0f, -1.0f,		0, 0,		0, 0, 0,	// 15
+
+	//Up
+	-1.0f, 1.0f, 1.0f,		0, 1,		0, 0, 0,	//16
+	1.0f, 1.0f, 1.0f,		1, 1,		0, 0, 0,
+	1.0f, 1.0f, -1.0f,		1, 0,		0, 0, 0,
+	-1.0f, 1.0f, -1.0f,		0, 0,		0, 0, 0,
+
+	//Down
+	-1.0f, -1.0f, -1.0f,	0, 1,		0, 0, 0,	//20
+	1.0f, -1.0f, -1.0f,		1, 1,		0, 0, 0,
+	1.0f, -1.0f, 1.0f,		1, 0,		0, 0, 0,
+	-1.0f, -1.0f, 1.0f,		0, 0,		0, 0, 0
+};
+
+GLshort cube_indices[] =
+{
+	//Front
+	0, 1, 3,
+	1, 2, 3,
+
+	//Right
+	4, 5, 7,
+	5, 6, 7,
+
+	//Left
+	8, 9, 11,
+	9, 10, 11,
+
+	//Back
+	12, 13, 15,
+	13, 14, 15,
+
+	//Up
+	16, 17, 19,
+	17, 18, 19,
+
+	//DOwn
+	20, 21, 23,
+	21, 22, 23
+};
+
 
 bool bWireFrameMode = false;
 
@@ -89,8 +155,11 @@ struct PointLight : public Light
 };
 
 
-PointLight pLight(glm::vec3(0.f, 5.f, 0.f), 1.f, 0.35f / 13.f, 0.44f / (13.f * 13.f),
+PointLight pLight(glm::vec3(0.f, 3.f, 0.f), 1.f, 0.35f / 13.f, 0.44f / (13.f * 13.f),
 	glm::vec3(1.f, 1.f, 1.f), 0.2f, glm::vec3(1.f, 1.f, 1.f), 1.f);
+
+//PointLight pLight2(glm::vec3(-1.f, 1.f, 1.f), 1.f, 0.35f / 13.f, 0.44f / (13.f * 13.f),
+//	glm::vec3(1.f, 1.f, 1.f), 0.2f, glm::vec3(1.f, 1.f, 1.f), 1.f);
 
 
 void calcAverageNormals(GLshort* indices, unsigned int indiceCount,
@@ -193,68 +262,10 @@ void init(void)
 	
 
 
-
-	int iNumOfGrid = 0;
-	cout << "Number of Divisions: ";
-	cin >> iNumOfGrid;
-
-	//Create Vertex
-	iNumOfVertices = (iNumOfGrid + 1) * (iNumOfGrid + 1);
+	iNumOfCubeIndices = sizeof(cube_indices) / sizeof(GLshort);
 	iVertexLength = 8;
-	plane_vertices = new GLfloat[iNumOfVertices * iVertexLength];
-	int iIndex = 0;
-	for (int j = 0; j <= iNumOfGrid; ++j)
-	{
-		for (int i = 0; i <= iNumOfGrid; ++i)
-		{
-			float x = (float)i / (float)iNumOfGrid;
-			float y = 0;
-			float z = (float)j / (float)iNumOfGrid;
-
-			//x, y, z
-			plane_vertices[iIndex] = x;
-			plane_vertices[iIndex + 1] = y;
-			plane_vertices[iIndex + 2] = z;
-
-			//u, v
-			plane_vertices[iIndex + 3] = (float)i / (float)iNumOfGrid;
-			plane_vertices[iIndex + 4] = (float)j / (float)iNumOfGrid;
-
-			//Normal
-			plane_vertices[iIndex + 5] = 0.f;
-			plane_vertices[iIndex + 6] = 0.f;
-			plane_vertices[iIndex + 7] = 0.f;
-
-			iIndex += iVertexLength;
-		}
-	}
-
-	//Create Index
-	iNumOfPlaneIndices = (iNumOfGrid * iNumOfGrid) * 2 * 3;
-	plane_indices = new GLshort[iNumOfPlaneIndices];
-	iIndex = 0;
-	for (int j = 0; j < iNumOfGrid; ++j)
-	{
-		for (int i = 0; i < iNumOfGrid; ++i)
-		{
-			int row1 = j * (iNumOfGrid + 1);
-			int row2 = (j + 1) * (iNumOfGrid + 1);
-
-			// triangle 1
-			plane_indices[iIndex] = row1 + i;
-			plane_indices[iIndex + 1] = row2 + i + 1;
-			plane_indices[iIndex + 2] = row1 + i + 1;
-			iIndex += 3;
-
-			// triangle 2
-			plane_indices[iIndex] = row1 + i;
-			plane_indices[iIndex + 1] = row2 + i;
-			plane_indices[iIndex + 2] = row2 + i + 1;
-			iIndex += 3;
-		}
-	}
-
-	calcAverageNormals(plane_indices, iNumOfPlaneIndices, plane_vertices, iNumOfVertices, iVertexLength, 5);
+	iNumOfVertices = sizeof(cube_vertices) / (sizeof(GLfloat) * iVertexLength);
+	calcAverageNormals(cube_indices, iNumOfCubeIndices, cube_vertices, iNumOfVertices, iVertexLength, 5);
 
 
 	vao = 0;
@@ -263,46 +274,75 @@ void init(void)
 
 		glGenBuffers(1, &ibo);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(plane_indices[0]) * iNumOfPlaneIndices, plane_indices, GL_STATIC_DRAW);
-		//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(plane_indices), plane_indices, GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_indices), cube_indices, GL_STATIC_DRAW);
 
 		points_vbo = 0;
 		glGenBuffers(1, &points_vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(plane_vertices[0]) * iNumOfVertices * iVertexLength, plane_vertices, GL_STATIC_DRAW);
-		//glBufferData(GL_ARRAY_BUFFER, sizeof(plane_vertices), plane_vertices, GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(plane_vertices[0]) * iVertexLength, 0);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(cube_vertices[0]) * iVertexLength, 0);
 		glEnableVertexAttribArray(0);
 
 		//tell location1 is for tex coordinate
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(plane_vertices[0]) * iVertexLength, (void*)(sizeof(plane_vertices[0]) * 3));
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(cube_vertices[0]) * iVertexLength, (void*)(sizeof(cube_vertices[0]) * 3));
 		glEnableVertexAttribArray(1);
 
 		//tell location2 is for normal
-		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(plane_vertices[0]) * iVertexLength, (void*)(sizeof(plane_vertices[0]) * 5));
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(cube_vertices[0]) * iVertexLength, (void*)(sizeof(cube_vertices[0]) * 5));
 		glEnableVertexAttribArray(2);
 
 
 
 	GLint width, height;
-	unsigned char* image = SOIL_load_image("bonusTexture.png", &width, &height, 0, SOIL_LOAD_RGB);
+	unsigned char* image = SOIL_load_image("Leather.jpg", &width, &height, 0, SOIL_LOAD_RGB);
 	if (image == nullptr)
 	{
 		printf("Error: image not found\n");
 	}
-
-	glActiveTexture(GL_TEXTURE0);
-	glGenTextures(1, &plane_tex);
-	glBindTexture(GL_TEXTURE_2D, plane_tex);
+	//glActiveTexture(GL_TEXTURE0);
+	glGenTextures(1, &iLeather_tex);
+	glBindTexture(GL_TEXTURE_2D, iLeather_tex);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	SOIL_free_image_data(image);
+
+
+
+
+
+	image = SOIL_load_image("Fence.png", &width, &height, 0, SOIL_LOAD_RGBA);
+	if (image == nullptr)
+	{
+		printf("Error: image not found\n");
+	}
+	glGenTextures(1, &iFence_tex);
+	glBindTexture(GL_TEXTURE_2D, iFence_tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	SOIL_free_image_data(image);
+
+
 	glUniform1i(glGetUniformLocation(program, "texture0"), 0);
 
 	// Enable depth test.
 	glEnable(GL_DEPTH_TEST);
+
+	//Set blend option
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	//Antialiasing
+	//glEnable(GL_LINE_SMOOTH);
+	//glEnable(GL_POLYGON_SMOOTH);
 }
 
 //---------------------------------------------------------------------
@@ -359,32 +399,22 @@ void display(void)
 
 
 	//Draw Plane
-	glBindTexture(GL_TEXTURE_2D, plane_tex);
+	glBindTexture(GL_TEXTURE_2D, iLeather_tex);
 	glBindVertexArray(vao);
-	transformObject(glm::vec3(10.f, 10.f, 10.f), Y_AXIS, 0.f, glm::vec3(0.0f, 0.0f, 0.0f));
-	glDrawElements(GL_TRIANGLES, iNumOfPlaneIndices, GL_UNSIGNED_SHORT, 0);
-	//glDrawElements(GL_TRIANGLES, sizeof(plane_indices) / sizeof(GLshort), GL_UNSIGNED_SHORT, 0);
+	static float fAngle = 0.f;
+	//fAngle += 0.1f;
+	if (fAngle >= 360.f)
+		fAngle -= 360.f;
+	transformObject(glm::vec3(1.f, 1.f, 1.f), Y_AXIS, fAngle, glm::vec3(0.0f, 0.0f, 0.0f));
+	glDrawElements(GL_TRIANGLES, iNumOfCubeIndices, GL_UNSIGNED_SHORT, 0);
 
 
-	
-	
-	
-	
-	//Normal Debug Mode
-	/*glBegin(GL_LINES);
-	for (int i = 0; i < iNumOfVertices; ++i)
-	{
-		unsigned int vOffset = i * iVertexLength;
-		unsigned int nOffset = i * iVertexLength + 5;
-
-		glVertex3f(plane_vertices[vOffset], plane_vertices[vOffset + 1], plane_vertices[vOffset + 2]);
-		glVertex3f(plane_vertices[vOffset] + plane_vertices[nOffset], 
-			plane_vertices[vOffset + 1] + plane_vertices[nOffset + 1], 
-			plane_vertices[vOffset + 2] + plane_vertices[nOffset + 2]);
-	}
-	glEnd();*/
-
-
+	/*glEnable(GL_BLEND);
+	glBindTexture(GL_TEXTURE_2D, iFence_tex);
+	glBindVertexArray(vao);
+	transformObject(glm::vec3(1.f, 1.f, 1.f), Y_AXIS, 0.f, glm::vec3(-1.0f, 0.0f, 0.0f));
+	glDrawElements(GL_TRIANGLES, iNumOfCubeIndices, GL_UNSIGNED_SHORT, 0);
+	glDisable(GL_BLEND);*/
 
 
 
@@ -444,6 +474,12 @@ void keyDown(unsigned char key, int x, int y)
 		case 'l':
 			pLight.position.x += fCameraSpeed;
 			break;
+		case 'p':
+			pLight.position.y += fCameraSpeed;
+			break;
+		case ';':
+			pLight.position.y -= fCameraSpeed;
+			break;
 
 
 
@@ -479,6 +515,12 @@ void mouseDown(int btn, int state, int x, int y)
 		"at " << x << "," << y << endl;
 }
 
+void clean()
+{
+	glDeleteTextures(1, &iLeather_tex);
+	glDeleteTextures(1, &iFence_tex);
+}
+
 //---------------------------------------------------------------------
 //
 // main
@@ -512,7 +554,6 @@ int main(int argc, char** argv)
 	glutMainLoop();
 
 
+	clean();
 
-	delete[] plane_vertices;
-	delete[] plane_indices;
 }

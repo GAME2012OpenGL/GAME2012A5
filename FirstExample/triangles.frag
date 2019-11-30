@@ -2,7 +2,6 @@
 
 struct Light
 {
-	vec3 ambientColor;
 	float ambientStrength;
 	vec3 diffuseColor;
 	float diffuseStrength;
@@ -32,20 +31,28 @@ uniform PointLight pLight;
 
 void main()
 {
-	vec4 ambient = vec4(pLight.base.ambientColor, 1.f) * pLight.base.ambientStrength;
+	//calculate ambient
+	vec3 ambient = pLight.base.ambientColor * pLight.base.ambientStrength;
+
+
 
 	//calculate the vector from this pixels surface to the light source
     vec3 surfaceToLight = pLight.position - WorldPos;
 	float distanceSurfaceToLight = length(surfaceToLight);
 
-	//Calculate diffuseFactor
-	float diffuseFactor = max(dot(normalize(Normal), normalize(surfaceToLight)), 0.f);
 
-	vec4 diffuse = vec4(pLight.base.diffuseColor, 1.f) * pLight.base.diffuseStrength * diffuseFactor;
+
+	//Calculate diffuse and diffuseFactor
+	float diffuseFactor = clamp(dot(normalize(Normal), normalize(surfaceToLight)), 0.f, 1.f);
+	vec3 diffuse = pLight.base.diffuseColor * pLight.base.diffuseStrength * diffuseFactor;
+
+
 
 	float Attenuation = clamp(	1.f / pLight.exponent * distanceSurfaceToLight * distanceSurfaceToLight +
 								pLight.linear * distanceSurfaceToLight + 
 								pLight.constant, 0.0f, 1.0f);
 
-	frag_colour = texture(texture0, texCoord) * (ambient + (Attenuation * diffuse));
+	vec4 surfaceColor = texture(texture0, texCoord);									
+	//frag_colour = vec4(surfaceColor.rgb * (ambient + (Attenuation * diffuse), surfaceColor.a);
+	frag_colour = vec4(surfaceColor.rgb * (ambient + diffuse), surfaceColor.a);
 }

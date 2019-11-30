@@ -18,7 +18,7 @@
     <ClCompile Include="LoadShaders.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="JD-101175013-Assignment4.cpp">
+    <ClCompile Include="JD-101175013-Assignment5.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
