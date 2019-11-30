@@ -29,6 +29,7 @@ GLuint uniformModel = 0;
 GLuint uniformView = 0;
 GLuint uniformProj = 0;
 GLuint uniformLightPos = 0;
+GLuint uniformEyePos = 0;
 
 GLuint vao, ibo, points_vbo, colours_vbo;
 GLuint iNumOfCubeIndices = 0;
@@ -124,18 +125,25 @@ bool bWireFrameMode = false;
 
 struct Light
 {
-	glm::vec3 ambientColor;
 	GLfloat ambientStrength;
+
 	glm::vec3 diffuseColor;
 	GLfloat diffuseStrength;
 
-	Light(glm::vec3 aCol, GLfloat aStr, glm::vec3 dCol, GLfloat dStr)
+	GLfloat specularStrength;
+	GLfloat shininess;
+
+	Light(GLfloat aStr, glm::vec3 dCol, GLfloat dStr, GLfloat sStr, GLfloat shin)
 	{
-		ambientColor = aCol;
 		ambientStrength = aStr;
+
 		diffuseColor = dCol;
 		diffuseStrength = dStr;
+
+		specularStrength = sStr;
+		shininess = shin;
 	}
+
 };
 
 struct PointLight : public Light
@@ -144,10 +152,11 @@ struct PointLight : public Light
 	GLfloat constant, linear, exponent;	//Quadratic equation for attenuation
 
 	PointLight(glm::vec3 pos, GLfloat con, GLfloat lin, GLfloat exp,
-		glm::vec3 aCol, GLfloat aStr, glm::vec3 dCol, GLfloat dStr)
-		:Light(aCol, aStr, dCol, dStr)
+		GLfloat aStr, glm::vec3 dCol, GLfloat dStr, GLfloat sStr, GLfloat shin)
+		:Light(aStr, dCol, dStr, sStr, shin)
 	{
 		position = pos;
+
 		constant = con;
 		linear = lin;
 		exponent = exp;
@@ -156,7 +165,7 @@ struct PointLight : public Light
 
 
 PointLight pLight(glm::vec3(0.f, 3.f, 0.f), 1.f, 0.35f / 13.f, 0.44f / (13.f * 13.f),
-	glm::vec3(1.f, 1.f, 1.f), 0.2f, glm::vec3(1.f, 1.f, 1.f), 1.f);
+				  0.2f, glm::vec3(1.f, 1.f, 1.f), 1.f, 1.f, 32.f);
 
 //PointLight pLight2(glm::vec3(-1.f, 1.f, 1.f), 1.f, 0.35f / 13.f, 0.44f / (13.f * 13.f),
 //	glm::vec3(1.f, 1.f, 1.f), 0.2f, glm::vec3(1.f, 1.f, 1.f), 1.f);
@@ -248,10 +257,11 @@ void init(void)
 
 
 	//Set light
-	glUniform3f(glGetUniformLocation(program, "pLight.base.ambientColor"), pLight.ambientColor.x, pLight.ambientColor.y, pLight.ambientColor.z);
 	glUniform1f(glGetUniformLocation(program, "pLight.base.ambientStrength"), pLight.ambientStrength);
 	glUniform3f(glGetUniformLocation(program, "pLight.base.diffuseColor"), pLight.diffuseColor.x, pLight.diffuseColor.y, pLight.diffuseColor.z);
 	glUniform1f(glGetUniformLocation(program, "pLight.base.diffuseStrength"), pLight.diffuseStrength);
+	glUniform1f(glGetUniformLocation(program, "pLight.base.specularStrength"), pLight.specularStrength);
+	glUniform1f(glGetUniformLocation(program, "pLight.base.shininess"), pLight.shininess);
 
 	glUniform3f(glGetUniformLocation(program, "pLight.position"), pLight.position.x, pLight.position.y, pLight.position.z);
 	glUniform1f(glGetUniformLocation(program, "pLight.constant"), pLight.constant);
@@ -259,7 +269,8 @@ void init(void)
 	glUniform1f(glGetUniformLocation(program, "pLight.exponent"), pLight.exponent);
 
 	uniformLightPos = glGetUniformLocation(program, "pLight.position");
-	
+	uniformEyePos = glGetUniformLocation(program, "eyePos");
+
 
 
 	iNumOfCubeIndices = sizeof(cube_indices) / sizeof(GLshort);
@@ -384,10 +395,13 @@ void display(void)
 	//Set projection and view matrix in shader
 	glUniformMatrix4fv(uniformProj, 1, GL_FALSE, &projection[0][0]);
 	glUniformMatrix4fv(uniformView, 1, GL_FALSE, &view[0][0]);
+	
 
-
+	//Set light position
 	glUniform3f(uniformLightPos, pLight.position.x, pLight.position.y, pLight.position.z);
 
+	//Set eye position
+	glUniform3f(uniformEyePos, CameraPosition.x, CameraPosition.y, CameraPosition.z);
 
 
 
