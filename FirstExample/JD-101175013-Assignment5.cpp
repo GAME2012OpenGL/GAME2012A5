@@ -29,6 +29,7 @@ GLuint uniformModel = 0;
 GLuint uniformView = 0;
 GLuint uniformProj = 0;
 GLuint uniformLightPos = 0;
+GLuint uniformLightPos2 = 0;
 GLuint uniformEyePos = 0;
 
 GLuint vao, ibo, points_vbo, colours_vbo;
@@ -163,12 +164,12 @@ struct PointLight : public Light
 	}
 };
 
-
-PointLight pLight(glm::vec3(0.f, 3.f, 0.f), 1.f, 0.35f / 13.f, 0.44f / (13.f * 13.f),
+//50 range
+PointLight pLight(glm::vec3(2.f, 2.f, -2.f), 1.f, 0.09, 0.032f,
 				  0.2f, glm::vec3(1.f, 1.f, 1.f), 1.f, 1.f, 32.f);
 
-//PointLight pLight2(glm::vec3(-1.f, 1.f, 1.f), 1.f, 0.35f / 13.f, 0.44f / (13.f * 13.f),
-//	glm::vec3(1.f, 1.f, 1.f), 0.2f, glm::vec3(1.f, 1.f, 1.f), 1.f);
+PointLight pLight2(glm::vec3(-2.f, -2.f, 2.f), 1.f, 0.09, 0.032f,
+				  0.2f, glm::vec3(1.f, 1.f, 1.f), 1.f, 1.f, 32.f);
 
 
 void calcAverageNormals(GLshort* indices, unsigned int indiceCount,
@@ -256,19 +257,36 @@ void init(void)
 
 
 
-	//Set light
-	glUniform1f(glGetUniformLocation(program, "pLight.base.ambientStrength"), pLight.ambientStrength);
-	glUniform3f(glGetUniformLocation(program, "pLight.base.diffuseColor"), pLight.diffuseColor.x, pLight.diffuseColor.y, pLight.diffuseColor.z);
-	glUniform1f(glGetUniformLocation(program, "pLight.base.diffuseStrength"), pLight.diffuseStrength);
-	glUniform1f(glGetUniformLocation(program, "pLight.base.specularStrength"), pLight.specularStrength);
-	glUniform1f(glGetUniformLocation(program, "pLight.base.shininess"), pLight.shininess);
+	//Set light1
+	glUniform1f(glGetUniformLocation(program, "pLight[0].base.ambientStrength"), pLight.ambientStrength);
+	glUniform3f(glGetUniformLocation(program, "pLight[0].base.diffuseColor"), pLight.diffuseColor.x, pLight.diffuseColor.y, pLight.diffuseColor.z);
+	glUniform1f(glGetUniformLocation(program, "pLight[0].base.diffuseStrength"), pLight.diffuseStrength);
+	glUniform1f(glGetUniformLocation(program, "pLight[0].base.specularStrength"), pLight.specularStrength);
+	glUniform1f(glGetUniformLocation(program, "pLight[0].base.shininess"), pLight.shininess);
 
-	glUniform3f(glGetUniformLocation(program, "pLight.position"), pLight.position.x, pLight.position.y, pLight.position.z);
-	glUniform1f(glGetUniformLocation(program, "pLight.constant"), pLight.constant);
-	glUniform1f(glGetUniformLocation(program, "pLight.linear"), pLight.linear);
-	glUniform1f(glGetUniformLocation(program, "pLight.exponent"), pLight.exponent);
+	glUniform3f(glGetUniformLocation(program, "pLight[0].position"), pLight.position.x, pLight.position.y, pLight.position.z);
+	glUniform1f(glGetUniformLocation(program, "pLight[0].constant"), pLight.constant);
+	glUniform1f(glGetUniformLocation(program, "pLight[0].linear"), pLight.linear);
+	glUniform1f(glGetUniformLocation(program, "pLight[0].exponent"), pLight.exponent);
 
-	uniformLightPos = glGetUniformLocation(program, "pLight.position");
+	uniformLightPos = glGetUniformLocation(program, "pLight[0].position");
+
+	//Set light2
+	glUniform1f(glGetUniformLocation(program, "pLight[1].base.ambientStrength"), pLight2.ambientStrength);
+	glUniform3f(glGetUniformLocation(program, "pLight[1].base.diffuseColor"), pLight2.diffuseColor.x, pLight2.diffuseColor.y, pLight2.diffuseColor.z);
+	glUniform1f(glGetUniformLocation(program, "pLight[1].base.diffuseStrength"), pLight2.diffuseStrength);
+	glUniform1f(glGetUniformLocation(program, "pLight[1].base.specularStrength"), pLight2.specularStrength);
+	glUniform1f(glGetUniformLocation(program, "pLight[1].base.shininess"), pLight2.shininess);
+
+	glUniform3f(glGetUniformLocation(program, "pLight[1].position"), pLight2.position.x, pLight2.position.y, pLight2.position.z);
+	glUniform1f(glGetUniformLocation(program, "pLight[1].constant"), pLight2.constant);
+	glUniform1f(glGetUniformLocation(program, "pLight[1].linear"), pLight2.linear);
+	glUniform1f(glGetUniformLocation(program, "pLight[1].exponent"), pLight2.exponent);
+
+	uniformLightPos2 = glGetUniformLocation(program, "pLight[1].position");
+
+
+
 	uniformEyePos = glGetUniformLocation(program, "eyePos");
 
 
@@ -349,11 +367,11 @@ void init(void)
 	glEnable(GL_DEPTH_TEST);
 
 	//Set blend option
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	//Antialiasing
-	//glEnable(GL_LINE_SMOOTH);
-	//glEnable(GL_POLYGON_SMOOTH);
+	glEnable(GL_LINE_SMOOTH);
+	glEnable(GL_POLYGON_SMOOTH);
 }
 
 //---------------------------------------------------------------------
@@ -399,6 +417,7 @@ void display(void)
 
 	//Set light position
 	glUniform3f(uniformLightPos, pLight.position.x, pLight.position.y, pLight.position.z);
+	glUniform3f(uniformLightPos2, pLight2.position.x, pLight2.position.y, pLight2.position.z);
 
 	//Set eye position
 	glUniform3f(uniformEyePos, CameraPosition.x, CameraPosition.y, CameraPosition.z);
@@ -416,19 +435,19 @@ void display(void)
 	glBindTexture(GL_TEXTURE_2D, iLeather_tex);
 	glBindVertexArray(vao);
 	static float fAngle = 0.f;
-	//fAngle += 0.1f;
+	fAngle += 1.f;
 	if (fAngle >= 360.f)
 		fAngle -= 360.f;
 	transformObject(glm::vec3(1.f, 1.f, 1.f), Y_AXIS, fAngle, glm::vec3(0.0f, 0.0f, 0.0f));
 	glDrawElements(GL_TRIANGLES, iNumOfCubeIndices, GL_UNSIGNED_SHORT, 0);
 
 
-	/*glEnable(GL_BLEND);
+	glEnable(GL_BLEND);
 	glBindTexture(GL_TEXTURE_2D, iFence_tex);
 	glBindVertexArray(vao);
-	transformObject(glm::vec3(1.f, 1.f, 1.f), Y_AXIS, 0.f, glm::vec3(-1.0f, 0.0f, 0.0f));
+	transformObject(glm::vec3(1.2f, 1.2f, 1.2f), Y_AXIS, fAngle, glm::vec3(0.0f, 0.0f, 0.0f));
 	glDrawElements(GL_TRIANGLES, iNumOfCubeIndices, GL_UNSIGNED_SHORT, 0);
-	glDisable(GL_BLEND);*/
+	glDisable(GL_BLEND);
 
 
 
