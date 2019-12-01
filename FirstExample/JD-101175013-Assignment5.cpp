@@ -32,12 +32,18 @@ GLuint uniformLightPos = 0;
 GLuint uniformLightPos2 = 0;
 GLuint uniformEyePos = 0;
 
-GLuint vao, ibo, points_vbo, colours_vbo;
+GLuint vao = 0, ibo = 0, points_vbo = 0;
 GLuint iNumOfCubeIndices = 0;
 GLuint iNumOfVertices = 0;
+
+GLuint pyramid_vao = 0, pyramid_ibo = 0, pyramid_points_vbo = 0;
+GLuint iNumOfPyramidIndices = 0;
+GLuint iNumOfPyramidVertices = 0;
+
 GLuint iVertexLength = 0;
 GLuint iLeather_tex = 0;
 GLuint iFence_tex = 0;
+GLuint iWindow_tex = 0;
 
 float rotAngle = 0.0f;
 
@@ -120,6 +126,53 @@ GLshort cube_indices[] =
 	21, 22, 23
 };
 
+GLfloat pyramid_vertices[] =
+{
+	//Front
+	0.f, 2.f, 0.f,		0.5, 0,		0, 0, 0,		//0
+	-1.f, 0.f, 1.f,		0, 1,		0, 0, 0,
+	1.f, 0.f, 1.f,		1, 1,		0, 0, 0,
+
+	//right
+	0.f, 2.f, 0.f,		0.5, 0,		0, 0, 0,		//3
+	1.f, 0.f, 1.f,		0, 1,		0, 0, 0,
+	1.f, 0.f, -1.f,		1, 1,		0, 0, 0,
+
+	//back
+	0.f, 2.f, 0.f,		0.5, 0,		0, 0, 0,		//6
+	1.f, 0.f, -1.f,		0, 1,		0, 0, 0,
+	-1.f, 0.f, -1.f,	1, 1,		0, 0, 0,
+
+	//left
+	0.f, 2.f, 0.f,		0.5, 0,		0, 0, 0,		//9
+	-1.f, 0.f, -1.f,	0, 1,		0, 0, 0,
+	-1.f, 0.f, 1.f,		1, 1,		0, 0, 0,
+
+	//bottom
+	-1.f, 0.f, 1.f,		0, 0,		0, 0, 0,		//12
+	-1.f, 0.f, -1.f,	0, 1,		0, 0, 0,
+	1.f, 0.f, -1.f,		1, 1,		0, 0, 0,
+	1.f, 0.f, 1.f,		1, 0,		0, 0, 0
+};
+
+GLshort pyramid_indices[] =
+{
+	//Front
+	0, 1, 2,
+
+	//RIght
+	3, 4, 5,
+
+	//Back
+	6, 7, 8,
+
+	//left
+	9, 10, 11,
+
+	//bottom
+	12, 13 ,14,
+	12, 14, 15
+};
 
 bool bWireFrameMode = false;
 
@@ -291,13 +344,14 @@ void init(void)
 
 
 
-	iNumOfCubeIndices = sizeof(cube_indices) / sizeof(GLshort);
 	iVertexLength = 8;
+
+	//////////////////////////////////Create Cube////////////////////////////////////////////////
+	iNumOfCubeIndices = sizeof(cube_indices) / sizeof(GLshort);
 	iNumOfVertices = sizeof(cube_vertices) / (sizeof(GLfloat) * iVertexLength);
 	calcAverageNormals(cube_indices, iNumOfCubeIndices, cube_vertices, iNumOfVertices, iVertexLength, 5);
 
 
-	vao = 0;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
@@ -305,7 +359,6 @@ void init(void)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_indices), cube_indices, GL_STATIC_DRAW);
 
-		points_vbo = 0;
 		glGenBuffers(1, &points_vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
@@ -319,9 +372,40 @@ void init(void)
 		//tell location2 is for normal
 		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(cube_vertices[0]) * iVertexLength, (void*)(sizeof(cube_vertices[0]) * 5));
 		glEnableVertexAttribArray(2);
+	////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+	//////////////////////////////////Create Pyramid////////////////////////////////////////////////
+	iNumOfPyramidIndices = sizeof(pyramid_indices) / sizeof(GLshort);
+	iNumOfPyramidVertices = sizeof(pyramid_vertices) / (sizeof(GLfloat) * iVertexLength);
+	calcAverageNormals(pyramid_indices, iNumOfPyramidIndices, pyramid_vertices, iNumOfPyramidVertices, iVertexLength, 5);
+
+
+	glGenVertexArrays(1, &pyramid_vao);
+	glBindVertexArray(pyramid_vao);
+
+		glGenBuffers(1, &pyramid_ibo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pyramid_ibo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(pyramid_indices), pyramid_indices, GL_STATIC_DRAW);
+
+		glGenBuffers(1, &pyramid_points_vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, pyramid_points_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(pyramid_vertices), pyramid_vertices, GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(pyramid_vertices[0])* iVertexLength, 0);
+		glEnableVertexAttribArray(0);
+
+		//tell location1 is for tex coordinate
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(pyramid_vertices[0])* iVertexLength, (void*)(sizeof(pyramid_vertices[0]) * 3));
+		glEnableVertexAttribArray(1);
+
+		//tell location2 is for normal
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(pyramid_vertices[0])* iVertexLength, (void*)(sizeof(pyramid_vertices[0]) * 5));
+		glEnableVertexAttribArray(2);
+	////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
+	//////////////////////////////////Create Texture////////////////////////////////////////////////
 	GLint width, height;
 	unsigned char* image = SOIL_load_image("Leather.jpg", &width, &height, 0, SOIL_LOAD_RGB);
 	if (image == nullptr)
@@ -361,7 +445,29 @@ void init(void)
 	SOIL_free_image_data(image);
 
 
+
+	image = SOIL_load_image("Window.png", &width, &height, 0, SOIL_LOAD_RGBA);
+	if (image == nullptr)
+	{
+		printf("Error: image not found\n");
+	}
+	glGenTextures(1, &iWindow_tex);
+	glBindTexture(GL_TEXTURE_2D, iWindow_tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	SOIL_free_image_data(image);
+
+
 	glUniform1i(glGetUniformLocation(program, "texture0"), 0);
+	////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 	// Enable depth test.
 	glEnable(GL_DEPTH_TEST);
@@ -441,6 +547,7 @@ void display(void)
 	transformObject(glm::vec3(1.f, 1.f, 1.f), Y_AXIS, fAngle, glm::vec3(0.0f, 0.0f, 0.0f));
 	glDrawElements(GL_TRIANGLES, iNumOfCubeIndices, GL_UNSIGNED_SHORT, 0);
 
+	
 
 	glEnable(GL_BLEND);
 	glBindTexture(GL_TEXTURE_2D, iFence_tex);
@@ -450,6 +557,16 @@ void display(void)
 	glDisable(GL_BLEND);
 
 
+	glEnable(GL_BLEND);
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_DEPTH_TEST);
+	glBindTexture(GL_TEXTURE_2D, iWindow_tex);
+	glBindVertexArray(pyramid_vao);
+	transformObject(glm::vec3(1.f, 1.f, 1.f), Y_AXIS, 0, glm::vec3(0.0f, -1.0f, 3.0f));
+	glDrawElements(GL_TRIANGLES, iNumOfPyramidIndices, GL_UNSIGNED_SHORT, 0);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glDisable(GL_BLEND);
 
 
 
@@ -552,6 +669,7 @@ void clean()
 {
 	glDeleteTextures(1, &iLeather_tex);
 	glDeleteTextures(1, &iFence_tex);
+	glDeleteTextures(1, &iWindow_tex);
 }
 
 //---------------------------------------------------------------------
