@@ -550,10 +550,12 @@ void display(void)
 	
 
 	glEnable(GL_BLEND);
+	glDisable(GL_CULL_FACE);
 	glBindTexture(GL_TEXTURE_2D, iFence_tex);
 	glBindVertexArray(vao);
 	transformObject(glm::vec3(1.2f, 1.2f, 1.2f), Y_AXIS, fAngle, glm::vec3(0.0f, 0.0f, 0.0f));
 	glDrawElements(GL_TRIANGLES, iNumOfCubeIndices, GL_UNSIGNED_SHORT, 0);
+	glEnable(GL_CULL_FACE);
 	glDisable(GL_BLEND);
 
 
